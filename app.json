@@ -1,21 +1,28 @@
 {
   "expo": {
-    "name": "wif-calculator-app",
+    "name": "wif-calculator",
     "slug": "wif-calculator-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/appIcon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/splash-screen.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/appIcon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.nhulyhuynh.wifcalculatorapp",
+      "versionCode": 1
     },
     "web": {
       "bundler": "metro",
@@ -27,15 +34,25 @@
       [
         "expo-splash-screen",
         {
+          "enableFullScreenImage_legacy": true,
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#E63946",
+          "ios": {
+            "image": "./assets/images/splash-screen.png",
+            "backgroundColor": "#ffffff"
+          },
+          "imageWidth": 200
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "0c8a81e2-a373-43d7-89ae-b4150995731f"
+      }
     }
   }
 }
