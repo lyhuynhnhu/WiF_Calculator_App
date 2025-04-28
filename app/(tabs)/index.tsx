@@ -40,31 +40,37 @@ const CalculatorScreen: React.FC = () => {
     setTouchedM(false);
   }, []);
 
-  // Effect to listen to AppState changes
+  // useEffect(() => {
+  //   const subscription = AppState.addEventListener("change", (nextAppState) => {
+  //     const currentState = appState.current;
+  //     appState.current = nextAppState;
+
+  //     console.log(currentState, nextAppState);
+  //     // Detect transition from background to active
+  //     if (currentState.match(/inactive|background/) && nextAppState === "active") {
+  //       console.log("App has come to the foreground!");
+  //     } else {
+  //       console.log("background");
+  //     }
+  //   });
+
+  //   return () => {
+  //     subscription.remove();
+  //   };
+  // }, []);
+
+  // Remove the navigation blur listener that was doing the reset
   useEffect(() => {
-    const subscription = AppState.addEventListener("change", (nextAppState) => {
-      // console.log(`AppState changed from ${appState.current} to ${nextAppState}`);
-      appState.current = nextAppState;
+    const unsubscribeBlur = navigation.addListener("blur", () => {
+      // Add a small delay before resetting
+      const timer = setTimeout(() => {
+        resetFields();
+      }, 100);
+
+      return () => clearTimeout(timer);
     });
 
-    return () => {
-      subscription.remove();
-    };
-  }, []);
-
-  useEffect(() => {
-    const unsubscribeBlur = navigation.addListener('blur', () => {
-      // This runs when the screen goes out of focus *due to navigation*
-      // console.log(`Navigation BLUR event. Current AppState: ${appState.current}`);
-      if (appState.current === "active") {
-         resetFields();
-      } else {
-      }
-    });
-
-    return () => {
-       unsubscribeBlur();
-    };
+    return unsubscribeBlur;
   }, [navigation, resetFields]);
 
   const calculateSection = useCallback((value: string, section: "A" | "D" | "M") => {
