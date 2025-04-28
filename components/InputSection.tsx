@@ -22,7 +22,6 @@ export const InputSection: React.FC<InputSectionProps> = ({
   touched,
   onTouch,
 }) => {
-  // Only show error if the field has been touched
   const showError = touched && error;
 
   return (
