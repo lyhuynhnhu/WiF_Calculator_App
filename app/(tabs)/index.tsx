@@ -1,10 +1,5 @@
-import React, { useCallback, useMemo, useState } from "react";
-import {
-  Alert,
-  Keyboard,
-  ScrollView,
-  StyleSheet,
-} from "react-native";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Alert, AppState, Keyboard, ScrollView, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors, Spacings } from "react-native-ui-lib";
 import { useFocusEffect } from "expo-router";
@@ -19,6 +14,8 @@ import { formatWithSign } from "@/utils/number";
 import { addToHistory } from "@/utils/storage";
 
 const CalculatorScreen: React.FC = () => {
+  const appState = useRef(AppState.currentState);
+
   // Input values
   const [sectionA, setSectionA] = useState("");
   const [sectionD, setSectionD] = useState("");
@@ -42,24 +39,39 @@ const CalculatorScreen: React.FC = () => {
     setTouchedM(false);
   }, []);
 
-  // Reset fields when screen loses focus
+  // Effect to listen to AppState changes
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      // console.log(`AppState changed from ${appState.current} to ${nextAppState}`);
+      appState.current = nextAppState;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  // Reset fields ONLY if screen loses focus WHILE APP IS STILL ACTIVE
   useFocusEffect(
     useCallback(() => {
       return () => {
-        // This runs when the screen is unfocused
-        resetFields();
+        // Runs when screen loses focus
+        // console.log(`CalculatorScreen UNFOCUSED. Current AppState: ${appState.current}`);
+        if (appState.current === "active") {
+          // console.log(" -> App is active, calling resetFields()");
+           resetFields();
+        } else {
+          // console.log(" -> App is NOT active, skipping resetFields()");
+        }
       };
-    }, [resetFields]),
+    }, [resetFields])
   );
 
-  const calculateSection = useCallback(
-    (value: string, section: "A" | "D" | "M") => {
-      const result = evaluateExpression(value);
-      const validation = validateSection(value, section);
-      return { total: result, ...validation };
-    },
-    []
-  );
+  const calculateSection = useCallback((value: string, section: "A" | "D" | "M") => {
+    const result = evaluateExpression(value);
+    const validation = validateSection(value, section);
+    return { total: result, ...validation };
+  }, []);
 
   const sectionResults = useMemo(
     () => ({
@@ -97,10 +109,7 @@ const CalculatorScreen: React.FC = () => {
     setTouchedM(true);
 
     if (!isFormValid) {
-      Alert.alert(
-        "Invalid Input",
-        "Sections A and D must have values greater than 0."
-      );
+      Alert.alert("Invalid Input", "Sections A and D must have values greater than 0.");
       return;
     }
 
