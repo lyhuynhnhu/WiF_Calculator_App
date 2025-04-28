@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Alert, AppState, Keyboard, ScrollView, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors, Spacings } from "react-native-ui-lib";
-import { useFocusEffect } from "expo-router";
+import { useNavigation } from "expo-router";
 import { CalculatorHeader } from "@/components/CalculatorHeader";
 import { InputSection } from "@/components/InputSection";
 import { GrandTotal } from "@/components/GrandTotal";
@@ -15,6 +15,7 @@ import { addToHistory } from "@/utils/storage";
 
 const CalculatorScreen: React.FC = () => {
   const appState = useRef(AppState.currentState);
+  const navigation = useNavigation();
 
   // Input values
   const [sectionA, setSectionA] = useState("");
@@ -51,21 +52,20 @@ const CalculatorScreen: React.FC = () => {
     };
   }, []);
 
-  // Reset fields ONLY if screen loses focus WHILE APP IS STILL ACTIVE
-  useFocusEffect(
-    useCallback(() => {
-      return () => {
-        // Runs when screen loses focus
-        // console.log(`CalculatorScreen UNFOCUSED. Current AppState: ${appState.current}`);
-        if (appState.current === "active") {
-          // console.log(" -> App is active, calling resetFields()");
-           resetFields();
-        } else {
-          // console.log(" -> App is NOT active, skipping resetFields()");
-        }
-      };
-    }, [resetFields])
-  );
+  useEffect(() => {
+    const unsubscribeBlur = navigation.addListener('blur', () => {
+      // This runs when the screen goes out of focus *due to navigation*
+      // console.log(`Navigation BLUR event. Current AppState: ${appState.current}`);
+      if (appState.current === "active") {
+         resetFields();
+      } else {
+      }
+    });
+
+    return () => {
+       unsubscribeBlur();
+    };
+  }, [navigation, resetFields]);
 
   const calculateSection = useCallback((value: string, section: "A" | "D" | "M") => {
     const result = evaluateExpression(value);
