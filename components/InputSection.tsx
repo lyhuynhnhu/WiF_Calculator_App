@@ -42,7 +42,6 @@ export const InputSection: React.FC<InputSectionProps> = ({
             // onFocus={() => {
             //   if (!touched) onTouch();
             // }}
-            multiline
             keyboardType="default"
             placeholder={`Enter ${label} calculations...`}
             autoCapitalize="none"
@@ -66,11 +65,11 @@ export const InputSection: React.FC<InputSectionProps> = ({
 
 const styles = StyleSheet.create({
   textInputContainer: {
-    borderRadius: 12,
+    borderRadius: 8,
     borderColor: "#DBE0E5",
     borderWidth: 1,
-    minHeight: 70,
-    maxHeight: 100,
+    minHeight: 50,
+    maxHeight: 70,
     width: "100%",
   },
   input: {
