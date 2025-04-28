@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Alert, AppState, Keyboard, ScrollView, StyleSheet } from "react-native";
+import { Alert, Keyboard, ScrollView, StyleSheet, TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Colors, Spacings } from "react-native-ui-lib";
+import { Colors, Spacings, View, Text } from "react-native-ui-lib";
 import { useNavigation } from "expo-router";
 import { CalculatorHeader } from "@/components/CalculatorHeader";
 import { InputSection } from "@/components/InputSection";
@@ -10,11 +10,10 @@ import { SaveButton } from "@/components/SaveButton";
 import { CalculationHistory } from "@/constants/historyType";
 import { evaluateExpression } from "@/utils/expression";
 import { validateSection } from "@/utils/validation";
-import { formatWithSign } from "@/utils/number";
+import { formatWithSign, formatTwoDecimals } from "@/utils/number";
 import { addToHistory } from "@/utils/storage";
 
 const CalculatorScreen: React.FC = () => {
-  const appState = useRef(AppState.currentState);
   const navigation = useNavigation();
 
   // Input values
@@ -31,33 +30,14 @@ const CalculatorScreen: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   // Reset all fields to default values
-  const resetFields = useCallback(() => {
+  const resetFields = () => {
     setSectionA("");
     setSectionD("");
     setSectionM("");
     setTouchedA(false);
     setTouchedD(false);
     setTouchedM(false);
-  }, []);
-
-  // useEffect(() => {
-  //   const subscription = AppState.addEventListener("change", (nextAppState) => {
-  //     const currentState = appState.current;
-  //     appState.current = nextAppState;
-
-  //     console.log(currentState, nextAppState);
-  //     // Detect transition from background to active
-  //     if (currentState.match(/inactive|background/) && nextAppState === "active") {
-  //       console.log("App has come to the foreground!");
-  //     } else {
-  //       console.log("background");
-  //     }
-  //   });
-
-  //   return () => {
-  //     subscription.remove();
-  //   };
-  // }, []);
+  };
 
   // Remove the navigation blur listener that was doing the reset
   useEffect(() => {
@@ -171,7 +151,7 @@ const CalculatorScreen: React.FC = () => {
         keyboardShouldPersistTaps="handled"
         onScrollBeginDrag={dismissKeyboard}
       >
-        <InputSection
+        {/* <InputSection
           label="A"
           value={sectionA}
           onValueChange={setSectionA}
@@ -179,27 +159,108 @@ const CalculatorScreen: React.FC = () => {
           error={sectionResults.A.error}
           touched={touchedA}
           onTouch={() => setTouchedA(true)}
-        />
+        /> */}
+        <View>
+          <View flex gap-8 paddingH-16 paddingV-12>
+            <Text text70BL color={Colors.navyBlue}>
+              A
+            </Text>
+            <View style={styles.textInputContainer}>
+              <TextInput
+                style={styles.input}
+                value={sectionA}
+                onChangeText={(text) => {
+                  setSectionA(text);
+                  if (!touchedA) setTouchedA(true);
+                }}
+                // onFocus={() => {
+                //   if (!touched) onTouch();
+                // }}
+                keyboardType="default"
+                placeholder={`Enter calculations...`}
+                autoCapitalize="none"
+                spellCheck={false}
+                textAlignVertical="top"
+              />
+            </View>
+            {touchedA && sectionResults.A?.error ? (
+              <Text text80 color={Colors.flameRed}>
+                {sectionResults.A?.error}
+              </Text>
+            ) : null}
+          </View>
+          <Text text80 color={"#637587"} marginH-16 marginB-8>
+            Total: {formatTwoDecimals(sectionResults.A?.total || 0)}
+          </Text>
+        </View>
 
-        <InputSection
-          label="D"
-          value={sectionD}
-          onValueChange={setSectionD}
-          total={sectionResults.D.total}
-          error={sectionResults.D.error}
-          touched={touchedD}
-          onTouch={() => setTouchedD(true)}
-        />
+        <View>
+          <View flex gap-8 paddingH-16 paddingV-12>
+            <Text text70BL color={Colors.navyBlue}>
+              D
+            </Text>
+            <View style={styles.textInputContainer}>
+              <TextInput
+                style={styles.input}
+                value={sectionD}
+                onChangeText={(text) => {
+                  setSectionD(text);
+                  if (!touchedD) setTouchedD(true);
+                }}
+                // onFocus={() => {
+                //   if (!touched) onTouch();
+                // }}
+                keyboardType="default"
+                placeholder={`Enter calculations...`}
+                autoCapitalize="none"
+                spellCheck={false}
+                textAlignVertical="top"
+              />
+            </View>
+            {touchedD && sectionResults.D?.error ? (
+              <Text text80 color={Colors.flameRed}>
+                {sectionResults.D?.error}
+              </Text>
+            ) : null}
+          </View>
+          <Text text80 color={"#637587"} marginH-16 marginB-8>
+            Total: {formatTwoDecimals(sectionResults.D?.total || 0)}
+          </Text>
+        </View>
 
-        <InputSection
-          label="M"
-          value={sectionM}
-          onValueChange={setSectionM}
-          total={sectionResults.M.total}
-          error={sectionResults.M.error}
-          touched={touchedM}
-          onTouch={() => setTouchedM(true)}
-        />
+        <View>
+          <View flex gap-8 paddingH-16 paddingV-12>
+            <Text text70BL color={Colors.navyBlue}>
+              M
+            </Text>
+            <View style={styles.textInputContainer}>
+              <TextInput
+                style={styles.input}
+                value={sectionM}
+                onChangeText={(text) => {
+                  setSectionM(text);
+                  if (!touchedM) setTouchedM(true);
+                }}
+                // onFocus={() => {
+                //   if (!touched) onTouch();
+                // }}
+                keyboardType="default"
+                placeholder={`Enter calculations...`}
+                autoCapitalize="none"
+                spellCheck={false}
+                textAlignVertical="top"
+              />
+            </View>
+            {touchedM && sectionResults.M?.error ? (
+              <Text text80 color={Colors.flameRed}>
+                {sectionResults.M?.error}
+              </Text>
+            ) : null}
+          </View>
+          <Text text80 color={"#637587"} marginH-16 marginB-8>
+            Total: {formatWithSign(sectionResults.M?.total || 0, 1)}
+          </Text>
+        </View>
 
         <GrandTotal total={formatWithSign(grandTotal, 1)} />
       </ScrollView>
@@ -229,5 +290,19 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: Spacings.s1,
     // paddingVertical: Spacings.s2,
+  },
+  textInputContainer: {
+    borderRadius: 8,
+    borderColor: "#DBE0E5",
+    borderWidth: 1,
+    minHeight: 50,
+    maxHeight: 70,
+    width: "100%",
+  },
+  input: {
+    flex: 1,
+    textAlignVertical: "top",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
 });
