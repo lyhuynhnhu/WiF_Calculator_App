@@ -1,3 +1,4 @@
+import "react-native-gesture-handler";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -5,12 +6,8 @@ import React, { useEffect } from "react";
 import { StatusBar } from "react-native";
 import { Colors, Spacings, Typography } from "react-native-ui-lib";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import "react-native-reanimated";
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
+import { enableScreens } from "react-native-screens";
+import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { ThemeColors } from "@/constants/Colors";
@@ -23,6 +20,8 @@ SplashScreen.setOptions({
   duration: 1000,
   fade: true,
 });
+
+enableScreens(false);
 
 Colors.loadColors({
   ...ThemeColors.WIFColors,
@@ -71,10 +70,7 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <SafeAreaProvider>
         <Stack>
-          <Stack.Screen
-            name="(tabs)"
-            options={{ headerShown: false, animation: "fade" }}
-          />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: "fade" }} />
           <Stack.Screen name="+not-found" />
         </Stack>
         <StatusBar barStyle="dark-content" backgroundColor="#fff" />

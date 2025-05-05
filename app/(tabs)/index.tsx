@@ -1,10 +1,17 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Alert, Keyboard, ScrollView, StyleSheet, TextInput } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Colors, Spacings, View, Text } from "react-native-ui-lib";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  AppState,
+  InteractionManager,
+  Keyboard,
+  ScrollView,
+  StyleSheet,
+  SafeAreaView,
+} from "react-native";
+import { Colors, Spacings, View, Text, TextField } from "react-native-ui-lib";
 import { useNavigation } from "expo-router";
 import { CalculatorHeader } from "@/components/CalculatorHeader";
-import { InputSection } from "@/components/InputSection";
 import { GrandTotal } from "@/components/GrandTotal";
 import { SaveButton } from "@/components/SaveButton";
 import { CalculationHistory } from "@/constants/historyType";
@@ -13,30 +20,68 @@ import { validateSection } from "@/utils/validation";
 import { formatWithSign, formatTwoDecimals } from "@/utils/number";
 import { addToHistory } from "@/utils/storage";
 
-const CalculatorScreen: React.FC = () => {
+export default function CalculatorScreen() {
   const navigation = useNavigation();
+
+  const appState = useRef(AppState.currentState);
 
   // Input values
   const [sectionA, setSectionA] = useState("");
   const [sectionD, setSectionD] = useState("");
   const [sectionM, setSectionM] = useState("");
 
-  // Touched state for each section
-  const [touchedA, setTouchedA] = useState(false);
-  const [touchedD, setTouchedD] = useState(false);
-  const [touchedM, setTouchedM] = useState(false);
+  const [sectionAError, setSectionAError] = useState("");
 
   // Saving state
   const [isSaving, setIsSaving] = useState(false);
+  const [canFocusInput, setCanFocusInput] = useState(false);
+
+  // Đợi layout ổn định sau khi resume
+  useEffect(() => {
+    let cancelled = false;
+    const task = InteractionManager.runAfterInteractions(() => {
+      if (!cancelled) {
+        setCanFocusInput(true);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      task.cancel();
+    };
+  }, []);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      const currentState = appState.current;
+      appState.current = nextAppState;
+
+      if (currentState.match(/inactive|background/) && nextAppState === "active") {
+        console.log("App resumed");
+
+        setCanFocusInput(false);
+
+        InteractionManager.runAfterInteractions(() => {
+          const rafId = requestAnimationFrame(() => {
+            setCanFocusInput(true);
+          });
+
+          // Dọn dẹp requestAnimationFrame nếu component unmount
+          return () => cancelAnimationFrame(rafId);
+        });
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   // Reset all fields to default values
   const resetFields = () => {
     setSectionA("");
     setSectionD("");
     setSectionM("");
-    setTouchedA(false);
-    setTouchedD(false);
-    setTouchedM(false);
   };
 
   // Remove the navigation blur listener that was doing the reset
@@ -53,25 +98,10 @@ const CalculatorScreen: React.FC = () => {
     return unsubscribeBlur;
   }, [navigation, resetFields]);
 
-  const calculateSection = useCallback((value: string, section: "A" | "D" | "M") => {
-    const result = evaluateExpression(value);
-    const validation = validateSection(value, section);
-    return { total: result, ...validation };
-  }, []);
-
-  const sectionResults = useMemo(
-    () => ({
-      A: calculateSection(sectionA, "A"),
-      D: calculateSection(sectionD, "D"),
-      M: calculateSection(sectionM, "M"),
-    }),
-    [sectionA, sectionD, sectionM, calculateSection]
-  );
-
   const grandTotal = useMemo(() => {
-    const aTotal = sectionResults.A.total;
-    const dTotal = sectionResults.D.total;
-    const mTotal = sectionResults.M.total;
+    const aTotal = evaluateExpression(sectionA);
+    const dTotal = evaluateExpression(sectionD);
+    const mTotal = evaluateExpression(sectionM);
 
     if (aTotal > 0 && dTotal > 0) {
       if (aTotal >= dTotal) {
@@ -81,19 +111,11 @@ const CalculatorScreen: React.FC = () => {
       }
     }
     return 0;
-  }, [sectionResults]);
+  }, [sectionA, sectionD, sectionM]);
 
-  // Check if form is valid for saving
-  const isFormValid = useMemo(() => {
-    return sectionResults.A.isValid && sectionResults.D.isValid;
-  }, [sectionResults.A.isValid, sectionResults.D.isValid]);
-
-  const handleSave = useCallback(async () => {
-    // Mark all fields as touched when trying to save
-    setTouchedA(true);
-    setTouchedD(true);
-    setTouchedM(true);
-
+  const handleSave = async () => {
+    const isFormValid =
+      validateSection(sectionD, "D").isValid && validateSection(sectionA, "A").isValid;
     if (!isFormValid) {
       Alert.alert("Invalid Input", "Sections A and D must have values greater than 0.");
       return;
@@ -108,15 +130,15 @@ const CalculatorScreen: React.FC = () => {
         savedDate: new Date(),
         sectionA: {
           value: sectionA,
-          total: sectionResults.A.total?.toString(),
+          total: evaluateExpression(sectionA)?.toString(),
         },
         sectionD: {
           value: sectionD,
-          total: sectionResults.D.total?.toString(),
+          total: evaluateExpression(sectionD)?.toString(),
         },
         sectionM: {
           value: sectionM,
-          total: formatWithSign(sectionResults.M?.total || 0, 1),
+          total: formatWithSign(evaluateExpression(sectionM) || 0, 1),
         },
         finalTotal: formatWithSign(grandTotal, 1),
       };
@@ -134,160 +156,137 @@ const CalculatorScreen: React.FC = () => {
     } finally {
       setIsSaving(false);
     }
-  }, [isFormValid, sectionA, sectionD, sectionM, sectionResults, grandTotal]);
+  };
 
   // Dismiss keyboard when tapping outside inputs
   const dismissKeyboard = () => {
     Keyboard.dismiss();
   };
 
+  const validateA = (value: string) => {
+    if (!value) {
+      setSectionAError("Field is required");
+    } else {
+      const result = validateSection(value, "A");
+      if (!result.isValid) {
+        setSectionAError("Giá trị A phải lớn hơn 0");
+      } else {
+        setSectionAError("");
+      }
+    }
+  };
+
+  const renderTotalSection = (section: "A" | "D" | "M", value: any) => {
+    const total = evaluateExpression(value);
+    const result = section === "M" ? formatWithSign(total, 1) : formatTwoDecimals(total);
+    return (
+      <Text text80 color={"#637587"} marginH-16 marginB-8>
+        Total: {result}
+      </Text>
+    );
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
-      <CalculatorHeader />
-
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        nestedScrollEnabled={true}
-        keyboardShouldPersistTaps="handled"
-        onScrollBeginDrag={dismissKeyboard}
-      >
-        {/* <InputSection
-          label="A"
-          value={sectionA}
-          onValueChange={setSectionA}
-          total={sectionResults.A.total}
-          error={sectionResults.A.error}
-          touched={touchedA}
-          onTouch={() => setTouchedA(true)}
-        /> */}
-        <View>
-          <View flex gap-8 paddingH-16 paddingV-12>
-            <Text text70BL color={Colors.navyBlue}>
-              A
-            </Text>
-            <View style={styles.textInputContainer}>
-              <TextInput
-                style={styles.input}
-                value={sectionA}
-                onChangeText={(text) => {
-                  setSectionA(text);
-                  if (!touchedA) setTouchedA(true);
-                }}
-                // onFocus={() => {
-                //   if (!touched) onTouch();
-                // }}
-                keyboardType="default"
-                placeholder={`Enter calculations...`}
-                autoCapitalize="none"
-                spellCheck={false}
-                textAlignVertical="top"
-              />
+    <View style={styles.container}>
+      <SafeAreaView>
+        <CalculatorHeader />
+      </SafeAreaView>
+      {canFocusInput ? (
+        <View flex>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled={true}
+            // onScrollBeginDrag={dismissKeyboard}
+          >
+            <View>
+              <View flex gap-6 paddingH-16 paddingT-12>
+                <TextField
+                  placeholder={"Enter calculations..."}
+                  value={sectionA}
+                  onChangeText={(text) => setSectionA(text)}
+                  fieldStyle={styles.textInputContainer}
+                  label="A"
+                  labelStyle={{ color: Colors.navyBlue, fontSize: 16, fontWeight: "bold" }}
+                  enableErrors
+                  validateOnBlur
+                  validate={["required", (value: any) => validateSection(value, "A").isValid]}
+                  validationMessage={["Field is required", "Value must be greater than 0"]}
+                />
+                {/* <Text text70BL color={Colors.navyBlue}>
+                  A
+                </Text>
+                <NativeTextInput
+                  style={styles.textInputContainer}
+                  placeholder="Enter calculations..."
+                  value={sectionA}
+                  onChangeText={(text) => {
+                    setSectionA(text);
+                    validateA(text);
+                  }}
+                  onBlur={() => validateA(sectionA)}
+                />
+                {sectionAError !== "" && (
+                  <Text text80 color={Colors.red10}>
+                    {sectionAError}
+                  </Text>
+                )} */}
+              </View>
+              {renderTotalSection("A", sectionA)}
             </View>
-            {touchedA && sectionResults.A?.error ? (
-              <Text text80 color={Colors.flameRed}>
-                {sectionResults.A?.error}
-              </Text>
-            ) : null}
-          </View>
-          <Text text80 color={"#637587"} marginH-16 marginB-8>
-            Total: {formatTwoDecimals(sectionResults.A?.total || 0)}
-          </Text>
-        </View>
 
-        <View>
-          <View flex gap-8 paddingH-16 paddingV-12>
-            <Text text70BL color={Colors.navyBlue}>
-              D
-            </Text>
-            <View style={styles.textInputContainer}>
-              <TextInput
-                style={styles.input}
-                value={sectionD}
-                onChangeText={(text) => {
-                  setSectionD(text);
-                  if (!touchedD) setTouchedD(true);
-                }}
-                // onFocus={() => {
-                //   if (!touched) onTouch();
-                // }}
-                keyboardType="default"
-                placeholder={`Enter calculations...`}
-                autoCapitalize="none"
-                spellCheck={false}
-                textAlignVertical="top"
-              />
+            <View>
+              <View flex gap-6 paddingH-16 paddingT-12>
+                <TextField
+                  placeholder={"Enter calculations..."}
+                  value={sectionD}
+                  onChangeText={(text) => setSectionD(text)}
+                  fieldStyle={styles.textInputContainer}
+                  label="D"
+                  labelStyle={{ color: Colors.navyBlue, fontSize: 16, fontWeight: "bold" }}
+                  enableErrors
+                  validateOnBlur
+                  validate={["required", (value: any) => validateSection(value, "D").isValid]}
+                  validationMessage={["Field is required", "Value must be greater than 0"]}
+                />
+              </View>
+              {renderTotalSection("D", sectionD)}
             </View>
-            {touchedD && sectionResults.D?.error ? (
-              <Text text80 color={Colors.flameRed}>
-                {sectionResults.D?.error}
-              </Text>
-            ) : null}
-          </View>
-          <Text text80 color={"#637587"} marginH-16 marginB-8>
-            Total: {formatTwoDecimals(sectionResults.D?.total || 0)}
-          </Text>
-        </View>
 
-        <View>
-          <View flex gap-8 paddingH-16 paddingV-12>
-            <Text text70BL color={Colors.navyBlue}>
-              M
-            </Text>
-            <View style={styles.textInputContainer}>
-              <TextInput
-                style={styles.input}
-                value={sectionM}
-                onChangeText={(text) => {
-                  setSectionM(text);
-                  if (!touchedM) setTouchedM(true);
-                }}
-                // onFocus={() => {
-                //   if (!touched) onTouch();
-                // }}
-                keyboardType="default"
-                placeholder={`Enter calculations...`}
-                autoCapitalize="none"
-                spellCheck={false}
-                textAlignVertical="top"
-              />
+            <View>
+              <View flex gap-6 paddingH-16 paddingT-12 paddingB-16>
+                <TextField
+                  placeholder={"Enter calculations..."}
+                  value={sectionM}
+                  onChangeText={(text) => setSectionM(text)}
+                  fieldStyle={styles.textInputContainer}
+                  label="M"
+                  labelStyle={{ color: Colors.navyBlue, fontSize: 16, fontWeight: "bold" }}
+                />
+              </View>
+              {renderTotalSection("M", sectionM)}
             </View>
-            {touchedM && sectionResults.M?.error ? (
-              <Text text80 color={Colors.flameRed}>
-                {sectionResults.M?.error}
-              </Text>
-            ) : null}
-          </View>
-          <Text text80 color={"#637587"} marginH-16 marginB-8>
-            Total: {formatWithSign(sectionResults.M?.total || 0, 1)}
-          </Text>
+
+            <GrandTotal total={formatWithSign(grandTotal, 1)} />
+          </ScrollView>
+          <SaveButton onPress={handleSave} disabled={isSaving} isLoading={isSaving} />
         </View>
-
-        <GrandTotal total={formatWithSign(grandTotal, 1)} />
-      </ScrollView>
-
-      <SaveButton
-        onPress={handleSave}
-        disabled={(!isFormValid && (touchedA || touchedD)) || isSaving}
-        isLoading={isSaving}
-      />
-    </SafeAreaView>
+      ) : (
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <ActivityIndicator size="large" color={Colors.navyBlue} />
+        </View>
+      )}
+    </View>
   );
-};
-
-export default CalculatorScreen;
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.white,
   },
-  backgroundImage: {
-    flex: 1,
-    width: "100%",
-    height: "100%",
-  },
   scrollContent: {
-    flexGrow: 1,
+    // flexGrow: 1,
     paddingHorizontal: Spacings.s1,
     // paddingVertical: Spacings.s2,
   },
@@ -295,9 +294,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderColor: "#DBE0E5",
     borderWidth: 1,
-    minHeight: 50,
+    minHeight: 45,
     maxHeight: 70,
     width: "100%",
+    paddingHorizontal: 12,
   },
   input: {
     flex: 1,

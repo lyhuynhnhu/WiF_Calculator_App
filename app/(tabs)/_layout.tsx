@@ -69,7 +69,7 @@ export default function TabLayout() {
         tabBarBackground: CustomTabBarBackground,
         tabBarStyle: {
           backgroundColor: "transparent",
-          height: Platform.OS === "ios" ? 88 : 60,
+          height: Platform.OS === "ios" ? 88 : 65,
           paddingBottom: Platform.OS === "ios" ? 30 : 10,
           paddingTop: 5,
         },
@@ -95,6 +95,15 @@ export default function TabLayout() {
           title: "History",
           tabBarIcon: ({ color }) => (
             <MaterialIcons name="history" size={28} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="test"
+        options={{
+          title: "Test",
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons name="home" size={28} color={color} />
           ),
         }}
       />
