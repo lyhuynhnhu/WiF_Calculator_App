@@ -3,14 +3,11 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
-import { StatusBar } from "react-native";
-import { Colors, Spacings, Typography } from "react-native-ui-lib";
+import { Platform, StatusBar, UIManager } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { enableScreens } from "react-native-screens";
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { ThemeColors } from "@/constants/Colors";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -21,34 +18,9 @@ SplashScreen.setOptions({
   fade: true,
 });
 
-enableScreens(false);
-
-Colors.loadColors({
-  ...ThemeColors.WIFColors,
-  primary: "#2089DC",
-  background: "#F5F7FA",
-  card: "#FFFFFF",
-  error: "#FF3B30",
-  secondary: "#637587",
-  border: "#E1E9EE",
-});
-
-Typography.loadTypographies({
-  h1: { fontSize: 28, fontWeight: "bold" },
-  h2: { fontSize: 20, fontWeight: "bold" },
-  p: { fontSize: 16 },
-  label: { fontSize: 16, fontWeight: "500" },
-  result: { fontSize: 18, fontWeight: "600" },
-  total: { fontSize: 24, fontWeight: "bold" },
-});
-
-Spacings.loadSpacings({
-  page: 20,
-  s1: 8,
-  s2: 16,
-  s3: 24,
-  s4: 32,
-});
+if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();

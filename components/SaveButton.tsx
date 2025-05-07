@@ -1,7 +1,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
-import { ActivityIndicator, StyleSheet } from "react-native";
-import { Colors, Text, TouchableOpacity, View } from "react-native-ui-lib";
+import { ActivityIndicator, StyleSheet, View, Text, TouchableOpacity } from "react-native";
+import { ThemeColors } from "@/constants/Colors";
 
 interface SaveButtonProps {
   onPress: () => void;
@@ -15,7 +15,7 @@ export const SaveButton: React.FC<SaveButtonProps> = ({
   isLoading = false,
 }) => {
   return (
-    <View padding-20>
+    <View style={{ padding: 20 }}>
       <TouchableOpacity
         style={[styles.saveBtn, disabled && styles.disabledSaveBtn]}
         activeOpacity={0.8}
@@ -23,7 +23,7 @@ export const SaveButton: React.FC<SaveButtonProps> = ({
         onPress={onPress}
       >
         <LinearGradient
-          colors={[Colors.navyBlue, Colors.flameRed]}
+          colors={[ThemeColors.WIFColors.navyBlue, ThemeColors.WIFColors.flameRed]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.gradientButton}
@@ -31,9 +31,7 @@ export const SaveButton: React.FC<SaveButtonProps> = ({
           {isLoading ? (
             <ActivityIndicator color="#FFFFFF" size="small" />
           ) : (
-            <Text white text70 style={styles.saveBtnLabel}>
-              Save to history
-            </Text>
+            <Text style={styles.saveBtnLabel}>Save to history</Text>
           )}
         </LinearGradient>
       </TouchableOpacity>
@@ -58,5 +56,7 @@ const styles = StyleSheet.create({
   },
   saveBtnLabel: {
     fontWeight: "bold",
+    fontSize: 16,
+    color: "white",
   },
 });

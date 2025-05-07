@@ -1,18 +1,18 @@
 import { Tabs } from "expo-router";
 import React from "react";
 import { Platform } from "react-native";
-import { Colors } from "react-native-ui-lib";
 import { PlatformPressable } from "@react-navigation/elements";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { ThemeColors } from "@/constants/Colors";
 
 // Custom TabBar background with gradient
 function CustomTabBarBackground() {
   return (
     <LinearGradient
-      colors={[Colors.navyBlue, Colors.darkNavyBlue]}
+      colors={[ThemeColors.WIFColors.navyBlue, ThemeColors.WIFColors.darkNavyBlue]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 0 }}
       style={{
@@ -34,14 +34,14 @@ export default function TabLayout() {
   // Override the color scheme with our custom theme
   const themeColors = {
     light: {
-      tint: Colors.flameRed,
-      tabIconDefault: Colors.grey50,
-      background: Colors.navyBlue,
+      tint: ThemeColors.WIFColors.flameRed,
+      tabIconDefault: ThemeColors.WIFColors.grey50,
+      background: ThemeColors.WIFColors.navyBlue,
     },
     dark: {
-      tint: Colors.flameYellow,
-      tabIconDefault: Colors.grey50,
-      background: Colors.darkNavyBlue,
+      tint: ThemeColors.WIFColors.flameYellow,
+      tabIconDefault: ThemeColors.WIFColors.grey50,
+      background: ThemeColors.WIFColors.darkNavyBlue,
     },
   };
 
@@ -84,27 +84,14 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Calculator",
-          tabBarIcon: ({ color }) => (
-            <MaterialIcons name="calculate" size={28} color={color} />
-          ),
+          tabBarIcon: ({ color }) => <MaterialIcons name="calculate" size={28} color={color} />,
         }}
       />
       <Tabs.Screen
         name="history"
         options={{
           title: "History",
-          tabBarIcon: ({ color }) => (
-            <MaterialIcons name="history" size={28} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="test"
-        options={{
-          title: "Test",
-          tabBarIcon: ({ color }) => (
-            <MaterialIcons name="home" size={28} color={color} />
-          ),
+          tabBarIcon: ({ color }) => <MaterialIcons name="history" size={28} color={color} />,
         }}
       />
     </Tabs>

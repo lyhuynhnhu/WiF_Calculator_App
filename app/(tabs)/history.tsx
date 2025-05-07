@@ -1,8 +1,15 @@
 import { useFocusEffect } from "expo-router";
 import React, { useCallback, useState } from "react";
-import { ActivityIndicator, Alert, ScrollView, StyleSheet } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, Colors, Text, View } from "react-native-ui-lib";
 import HistoryItem from "@/components/HistoryItem";
 import { HistoryDetailModal } from "@/components/HistoryDetailModal";
 import { CalculationHistory } from "@/constants/historyType";
@@ -74,29 +81,26 @@ export default function HistoryScreen() {
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
-      <View style={styles.header} bg-white padding-16>
-        <View row centerV>
-          {/* logo */}
-          <Text text60BO marginH-16>
-            History
-          </Text>
-        </View>
+      <View style={styles.header}>
+        <Text style={{ fontSize: 20, fontWeight: "bold", marginHorizontal: 8 }}>History</Text>
         {history.length > 0 && (
-          <Button link label="Clear All" labelStyle={styles.clearButton} onPress={handleClearAll} />
+          <TouchableOpacity onPress={handleClearAll}>
+            <Text style={styles.clearButton}>Clear All</Text>
+          </TouchableOpacity>
         )}
       </View>
 
       {/* History List */}
       <View style={styles.historyContent}>
         {loading ? (
-          <View flex center padding-28>
-            <ActivityIndicator size="large" color={Colors.navyBlue} />
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+            <ActivityIndicator size="large" color={"#1d3557"} />
           </View>
         ) : (
           <>
             {history.length === 0 ? (
-              <View style={styles.emptyContainer} padding-28>
-                <Text text70 center color={Colors.secondary}>
+              <View style={styles.emptyContainer}>
+                <Text style={{ fontSize: 16, textAlign: "center", color: "#6E7881" }}>
                   No calculation history yet
                 </Text>
               </View>
@@ -129,20 +133,22 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
+    backgroundColor: "#fff",
   },
   header: {
     boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    backgroundColor: "#fff",
+    padding: 16,
   },
   historyContent: {
     flex: 1,
     backgroundColor: "#F5F7FA",
   },
   clearButton: {
-    color: Colors.grey30,
+    color: "#6E7881",
   },
   scrollView: {
     flex: 1,

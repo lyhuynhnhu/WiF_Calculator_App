@@ -4,12 +4,13 @@ import {
   Alert,
   AppState,
   InteractionManager,
-  Keyboard,
   ScrollView,
   StyleSheet,
   SafeAreaView,
+  View,
+  Text,
+  TextInput,
 } from "react-native";
-import { Colors, Spacings, View, Text, TextField } from "react-native-ui-lib";
 import { useNavigation } from "expo-router";
 import { CalculatorHeader } from "@/components/CalculatorHeader";
 import { GrandTotal } from "@/components/GrandTotal";
@@ -19,6 +20,7 @@ import { evaluateExpression } from "@/utils/expression";
 import { validateSection } from "@/utils/validation";
 import { formatWithSign, formatTwoDecimals } from "@/utils/number";
 import { addToHistory } from "@/utils/storage";
+import { ThemeColors } from "@/constants/Colors";
 
 export default function CalculatorScreen() {
   const navigation = useNavigation();
@@ -31,6 +33,7 @@ export default function CalculatorScreen() {
   const [sectionM, setSectionM] = useState("");
 
   const [sectionAError, setSectionAError] = useState("");
+  const [sectionDError, setSectionDError] = useState("");
 
   // Saving state
   const [isSaving, setIsSaving] = useState(false);
@@ -51,48 +54,19 @@ export default function CalculatorScreen() {
     };
   }, []);
 
-  useEffect(() => {
-    const subscription = AppState.addEventListener("change", (nextAppState) => {
-      const currentState = appState.current;
-      appState.current = nextAppState;
-
-      if (currentState.match(/inactive|background/) && nextAppState === "active") {
-        console.log("App resumed");
-
-        setCanFocusInput(false);
-
-        InteractionManager.runAfterInteractions(() => {
-          const rafId = requestAnimationFrame(() => {
-            setCanFocusInput(true);
-          });
-
-          // Dọn dẹp requestAnimationFrame nếu component unmount
-          return () => cancelAnimationFrame(rafId);
-        });
-      }
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, []);
-
   // Reset all fields to default values
   const resetFields = () => {
     setSectionA("");
     setSectionD("");
     setSectionM("");
+    setSectionAError("");
+    setSectionDError("");
   };
 
   // Remove the navigation blur listener that was doing the reset
   useEffect(() => {
     const unsubscribeBlur = navigation.addListener("blur", () => {
-      // Add a small delay before resetting
-      const timer = setTimeout(() => {
-        resetFields();
-      }, 100);
-
-      return () => clearTimeout(timer);
+      resetFields();
     });
 
     return unsubscribeBlur;
@@ -158,11 +132,6 @@ export default function CalculatorScreen() {
     }
   };
 
-  // Dismiss keyboard when tapping outside inputs
-  const dismissKeyboard = () => {
-    Keyboard.dismiss();
-  };
-
   const validateA = (value: string) => {
     if (!value) {
       setSectionAError("Field is required");
@@ -175,12 +144,24 @@ export default function CalculatorScreen() {
       }
     }
   };
+  const validateD = (value: string) => {
+    if (!value) {
+      setSectionDError("Field is required");
+    } else {
+      const result = validateSection(value, "D");
+      if (!result.isValid) {
+        setSectionDError("Giá trị D phải lớn hơn 0");
+      } else {
+        setSectionDError("");
+      }
+    }
+  };
 
   const renderTotalSection = (section: "A" | "D" | "M", value: any) => {
     const total = evaluateExpression(value);
     const result = section === "M" ? formatWithSign(total, 1) : formatTwoDecimals(total);
     return (
-      <Text text80 color={"#637587"} marginH-16 marginB-8>
+      <Text style={{ fontSize: 15, color: "#637587", marginVertical: 8, marginHorizontal: 8 }}>
         Total: {result}
       </Text>
     );
@@ -192,7 +173,7 @@ export default function CalculatorScreen() {
         <CalculatorHeader />
       </SafeAreaView>
       {canFocusInput ? (
-        <View flex>
+        <View style={{ flex: 1 }}>
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
@@ -200,25 +181,12 @@ export default function CalculatorScreen() {
             // onScrollBeginDrag={dismissKeyboard}
           >
             <View>
-              <View flex gap-6 paddingH-16 paddingT-12>
-                <TextField
-                  placeholder={"Enter calculations..."}
-                  value={sectionA}
-                  onChangeText={(text) => setSectionA(text)}
-                  fieldStyle={styles.textInputContainer}
-                  label="A"
-                  labelStyle={{ color: Colors.navyBlue, fontSize: 16, fontWeight: "bold" }}
-                  enableErrors
-                  validateOnBlur
-                  validate={["required", (value: any) => validateSection(value, "A").isValid]}
-                  validationMessage={["Field is required", "Value must be greater than 0"]}
-                />
-                {/* <Text text70BL color={Colors.navyBlue}>
-                  A
-                </Text>
-                <NativeTextInput
+              <View style={styles.fieldWrapper}>
+                <Text style={styles.labelForm}>A</Text>
+                <TextInput
                   style={styles.textInputContainer}
                   placeholder="Enter calculations..."
+                  placeholderTextColor={"#637587"}
                   value={sectionA}
                   onChangeText={(text) => {
                     setSectionA(text);
@@ -227,41 +195,44 @@ export default function CalculatorScreen() {
                   onBlur={() => validateA(sectionA)}
                 />
                 {sectionAError !== "" && (
-                  <Text text80 color={Colors.red10}>
-                    {sectionAError}
-                  </Text>
-                )} */}
+                  <Text style={{ fontSize: 12, color: "red" }}>{sectionAError}</Text>
+                )}
               </View>
               {renderTotalSection("A", sectionA)}
             </View>
 
             <View>
-              <View flex gap-6 paddingH-16 paddingT-12>
-                <TextField
-                  placeholder={"Enter calculations..."}
+              <View style={styles.fieldWrapper}>
+                <Text style={styles.labelForm}>D</Text>
+                <TextInput
+                  style={styles.textInputContainer}
+                  placeholder="Enter calculations..."
+                  placeholderTextColor={"#637587"}
                   value={sectionD}
-                  onChangeText={(text) => setSectionD(text)}
-                  fieldStyle={styles.textInputContainer}
-                  label="D"
-                  labelStyle={{ color: Colors.navyBlue, fontSize: 16, fontWeight: "bold" }}
-                  enableErrors
-                  validateOnBlur
-                  validate={["required", (value: any) => validateSection(value, "D").isValid]}
-                  validationMessage={["Field is required", "Value must be greater than 0"]}
+                  onChangeText={(text) => {
+                    setSectionD(text);
+                    validateD(text);
+                  }}
+                  onBlur={() => validateD(sectionD)}
                 />
+                {sectionDError !== "" && (
+                  <Text style={{ fontSize: 12, color: "red" }}>{sectionDError}</Text>
+                )}
               </View>
               {renderTotalSection("D", sectionD)}
             </View>
 
             <View>
-              <View flex gap-6 paddingH-16 paddingT-12 paddingB-16>
-                <TextField
-                  placeholder={"Enter calculations..."}
+              <View style={styles.fieldWrapper}>
+                <Text style={styles.labelForm}>M</Text>
+                <TextInput
+                  style={styles.textInputContainer}
+                  placeholder="Enter calculations..."
+                  placeholderTextColor={"#637587"}
                   value={sectionM}
-                  onChangeText={(text) => setSectionM(text)}
-                  fieldStyle={styles.textInputContainer}
-                  label="M"
-                  labelStyle={{ color: Colors.navyBlue, fontSize: 16, fontWeight: "bold" }}
+                  onChangeText={(text) => {
+                    setSectionM(text);
+                  }}
                 />
               </View>
               {renderTotalSection("M", sectionM)}
@@ -273,7 +244,7 @@ export default function CalculatorScreen() {
         </View>
       ) : (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <ActivityIndicator size="large" color={Colors.navyBlue} />
+          <ActivityIndicator size="large" color={"#637587"} />
         </View>
       )}
     </View>
@@ -283,12 +254,20 @@ export default function CalculatorScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
+    backgroundColor: "#fff",
   },
   scrollContent: {
-    // flexGrow: 1,
-    paddingHorizontal: Spacings.s1,
-    // paddingVertical: Spacings.s2,
+    paddingHorizontal: 12,
+  },
+  fieldWrapper: {
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingTop: 12,
+  },
+  labelForm: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: ThemeColors.WIFColors.navyBlue,
   },
   textInputContainer: {
     borderRadius: 8,
@@ -298,11 +277,5 @@ const styles = StyleSheet.create({
     maxHeight: 70,
     width: "100%",
     paddingHorizontal: 12,
-  },
-  input: {
-    flex: 1,
-    textAlignVertical: "top",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
   },
 });

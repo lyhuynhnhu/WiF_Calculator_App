@@ -1,8 +1,8 @@
 import moment from "moment";
 import React from "react";
-import { StyleSheet, Modal, ScrollView } from "react-native";
-import { View, Text, Button, Colors } from "react-native-ui-lib";
+import { StyleSheet, Modal, ScrollView, TouchableOpacity, View, Text } from "react-native";
 import { CalculationHistory } from "@/constants/historyType";
+import { ThemeColors } from "@/constants/Colors";
 
 interface HistoryDetailModalProps {
   visible: boolean;
@@ -20,69 +20,57 @@ export const HistoryDetailModal: React.FC<HistoryDetailModalProps> = ({
   const formattedDate = moment(item.savedDate).format("YYYY-MM-DD hh:mm A");
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
-          <Text text60BO color={Colors.darkNavyBlue} center marginB-8>
+          <Text
+            style={{
+              fontSize: 18,
+              fontWeight: "bold",
+              color: ThemeColors.WIFColors.darkNavyBlue,
+              textAlign: "center",
+              marginBottom: 4,
+            }}
+          >
             Calculation Details
           </Text>
-          <Text text80 color={Colors.secondary} center marginB-16>
+          <Text style={{ fontSize: 14, color: "#637587", textAlign: "center", marginBottom: 8 }}>
             {formattedDate}
           </Text>
 
           <ScrollView style={styles.scrollView}>
             <View style={styles.section}>
-              <Text text80BO color={Colors.darkNavyBlue} marginB-8>
-                Section A
-              </Text>
-              <Text text80 color="#121417" marginB-8>
-                {item.sectionA.value}
-              </Text>
-              <Text text80 color="#121417">
-                Total: {item.sectionA.total}
-              </Text>
+              <Text style={styles.label}>Section A</Text>
+              <Text style={[styles.value, { marginBottom: 4 }]}>{item.sectionA.value}</Text>
+              <Text style={styles.value}>Total: {item.sectionA.total}</Text>
             </View>
 
             <View style={styles.section}>
-              <Text text80BO color={Colors.darkNavyBlue} marginB-8>
-                Section D
-              </Text>
-              <Text text80 color="#121417" marginB-8>
-                {item.sectionD.value}
-              </Text>
-              <Text text80 color="#121417">
-                Total: {item.sectionD.total}
-              </Text>
+              <Text style={styles.label}>Section D</Text>
+              <Text style={[styles.value, { marginBottom: 4 }]}>{item.sectionD.value}</Text>
+              <Text style={styles.value}>Total: {item.sectionD.total}</Text>
             </View>
 
             <View style={styles.section}>
-              <Text text80BO color={Colors.darkNavyBlue} marginB-8>
-                Section M
-              </Text>
-              <Text text80 color="#121417" marginB-8>
-                {item.sectionM.value}
-              </Text>
-              <Text text80 color="#121417">
-                Total: {item.sectionM.total}
-              </Text>
+              <Text style={styles.label}>Section M</Text>
+              <Text style={[styles.value, { marginBottom: 4 }]}>{item.sectionM.value}</Text>
+              <Text style={styles.value}>Total: {item.sectionM.total}</Text>
             </View>
 
-            <View flex row center marginB-8>
-              <Text text65BO color={Colors.navyBlue}>
+            <View style={styles.finalTotal}>
+              <Text
+                style={{ fontSize: 18, fontWeight: "bold", color: ThemeColors.WIFColors.navyBlue }}
+              >
                 Final Total:{" "}
               </Text>
               <Text
-                text65BO
-                color={
-                  item.finalTotal.startsWith("-")
-                    ? Colors.flameRed
-                    : Colors.navyBlue
-                }
+                style={{
+                  fontSize: 18,
+                  fontWeight: "bold",
+                  color: item.finalTotal.startsWith("-")
+                    ? ThemeColors.WIFColors.flameRed
+                    : ThemeColors.WIFColors.navyBlue,
+                }}
               >
                 {item.finalTotal}
               </Text>
@@ -90,21 +78,9 @@ export const HistoryDetailModal: React.FC<HistoryDetailModalProps> = ({
           </ScrollView>
 
           <View style={styles.buttonContainer}>
-            {/* <Button
-              label="Restore"
-              backgroundColor="#007AFF"
-              style={styles.button}
-              onPress={() => {
-                onRestore(item);
-                onClose();
-              }}
-            /> */}
-            <Button
-              label="Close"
-              backgroundColor="#637587"
-              style={styles.button}
-              onPress={onClose}
-            />
+            <TouchableOpacity style={styles.button} onPress={onClose}>
+              <Text style={{ color: "#fff", fontSize: 16 }}>Close</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -135,13 +111,29 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   scrollView: {
-    maxHeight: 400,
+    // maxHeight: 400,
   },
   section: {
-    marginBottom: 20,
+    marginBottom: 16,
     padding: 12,
-    backgroundColor: Colors.grey70,
+    backgroundColor: "#F0F2F5",
     borderRadius: 8,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: ThemeColors.WIFColors.darkNavyBlue,
+    marginBottom: 4,
+  },
+  value: {
+    fontSize: 14,
+    color: "#121417",
+  },
+  finalTotal: {
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
   },
   buttonContainer: {
     flexDirection: "row",
@@ -149,6 +141,12 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   button: {
-    minWidth: 100,
+    minWidth: 90,
+    backgroundColor: "#637587",
+    borderRadius: 24,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 8,
   },
 });

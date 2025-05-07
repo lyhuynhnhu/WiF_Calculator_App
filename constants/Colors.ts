@@ -31,5 +31,6 @@ export const ThemeColors = {
     flameYellow: "#fcbf49",
     white: "#ffffff",
     lightGray: "#f1faee",
+    grey50: "#D2D6D8",
   },
 };

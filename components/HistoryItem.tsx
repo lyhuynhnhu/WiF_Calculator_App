@@ -1,15 +1,9 @@
+import { ThemeColors } from "@/constants/Colors";
 import { CalculationHistory } from "@/constants/historyType";
 import { MaterialIcons } from "@expo/vector-icons";
 import moment from "moment";
 import React from "react";
-import { StyleSheet } from "react-native";
-import {
-  View,
-  Text,
-  Card,
-  Colors,
-  TouchableOpacity,
-} from "react-native-ui-lib";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface HistoryItemProps {
   item: CalculationHistory;
@@ -17,42 +11,40 @@ interface HistoryItemProps {
   onDelete: (id: string) => void;
 }
 
-const HistoryItem: React.FC<HistoryItemProps> = ({
-  item,
-  onPress,
-  onDelete,
-}) => {
+const HistoryItem: React.FC<HistoryItemProps> = ({ item, onPress, onDelete }) => {
   const formattedDate = moment(item.savedDate).format("MMM DD YYYY hh:mm A");
   const total = item.finalTotal;
 
   return (
-    <Card style={styles.card} onPress={() => onPress(item)}>
-      <View flex row center padding-16>
+    <TouchableOpacity style={styles.card} onPress={() => onPress(item)}>
+      <View style={styles.historyItem}>
         <View style={styles.contentContainer}>
-          <Text text70BO color={Colors.navyBlue}>
+          <Text
+            style={{
+              fontSize: 16,
+              fontWeight: "bold",
+              color: ThemeColors.WIFColors.navyBlue,
+              marginBottom: 2,
+            }}
+          >
             Total:{" "}
             <Text
-              color={total.startsWith("-") ? Colors.flameRed : Colors.navyBlue}
+              style={{
+                color: total.startsWith("-")
+                  ? ThemeColors.WIFColors.flameRed
+                  : ThemeColors.WIFColors.navyBlue,
+              }}
             >
               {total}
             </Text>
           </Text>
-          <Text text80 grey40>
-            Saved on {formattedDate}
-          </Text>
+          <Text style={{ fontSize: 14, color: "#A6ACB1" }}>Saved on {formattedDate}</Text>
         </View>
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={() => onDelete(item.id)}
-        >
-          <MaterialIcons
-            name="delete-outline"
-            size={20}
-            color={Colors.navyBlue}
-          />
+        <TouchableOpacity style={styles.deleteButton} onPress={() => onDelete(item.id)}>
+          <MaterialIcons name="delete-outline" size={20} color={ThemeColors.WIFColors.navyBlue} />
         </TouchableOpacity>
       </View>
-    </Card>
+    </TouchableOpacity>
   );
 };
 
@@ -64,6 +56,13 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     borderRadius: 12,
     backgroundColor: "#FFFFFF",
+  },
+  historyItem: {
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
   },
   contentContainer: {
     display: "flex",
